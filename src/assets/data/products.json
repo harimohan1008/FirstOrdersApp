@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Ergonomic Keyboard", "category": "Accessories", "price": 89.99, "stock": 42 },
+  { "id": 2, "name": "27-inch Monitor", "category": "Displays", "price": 329.0, "stock": 15 },
+  { "id": 3, "name": "Noise-Cancelling Headphones", "category": "Audio", "price": 199.5, "stock": 8 },
+  { "id": 4, "name": "USB-C Dock", "category": "Accessories", "price": 119.0, "stock": 0 },
+  { "id": 5, "name": "Webcam HD", "category": "Video", "price": 59.99, "stock": 27 },
+  { "id": 6, "name": "Studio Microphone", "category": "Audio", "price": 149.0, "stock": 11 }
+]
