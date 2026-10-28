@@ -1,0 +1,7 @@
+[
+  { "id": 1001, "customer": "Acme Corp", "date": "2026-10-20", "total": 419.99, "status": "Shipped" },
+  { "id": 1002, "customer": "Globex Ltd", "date": "2026-10-22", "total": 89.99, "status": "Processing" },
+  { "id": 1003, "customer": "Initech", "date": "2026-10-24", "total": 658.0, "status": "Delivered" },
+  { "id": 1004, "customer": "Umbrella Inc", "date": "2026-10-26", "total": 149.0, "status": "Cancelled" },
+  { "id": 1005, "customer": "Stark Industries", "date": "2026-10-27", "total": 328.49, "status": "Processing" }
+]
