@@ -1,32 +1,31 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { MenuItem, Role, Session, User } from './models';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, catchError, map, of, tap } from 'rxjs';
+import { MenuItem, Role, Session } from './models';
 
 const STORAGE_KEY = 'ams.session';
 
-/** Demo credentials only. A real app would validate against a server. */
-const DEMO_ACCOUNTS: Record<string, { password: string; user: User }> = {
-  admin: { password: 'admin123', user: { id: 1, username: 'admin', displayName: 'Alice Admin', role: 'admin' } },
-  manager: { password: 'manager123', user: { id: 2, username: 'manager', displayName: 'Mark Manager', role: 'manager' } },
-  customer: { password: 'customer123', user: { id: 3, username: 'customer', displayName: 'Cara Customer', role: 'customer' } },
-};
+export type LoginResult = 'ok' | 'invalid' | 'error';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly http = inject(HttpClient);
   private readonly session = signal<Session | null>(this.restore());
 
   readonly user = computed(() => this.session()?.user ?? null);
   readonly token = computed(() => this.session()?.token ?? null);
   readonly isAuthenticated = computed(() => this.session() !== null);
 
-  login(username: string, password: string): boolean {
-    const account = DEMO_ACCOUNTS[username.trim().toLowerCase()];
-    if (!account || account.password !== password) {
-      return false;
-    }
-    const session: Session = { user: account.user, token: `dummy-jwt-${account.user.role}` };
-    this.session.set(session);
-    this.persist(session);
-    return true;
+  /** Calls POST /api/auth/login. 'invalid' = wrong credentials, 'error' = server unreachable or failed. */
+  login(username: string, password: string): Observable<LoginResult> {
+    return this.http.post<Session>('/api/auth/login', { username: username.trim(), password }).pipe(
+      tap((session) => {
+        this.session.set(session);
+        this.persist(session);
+      }),
+      map((): LoginResult => 'ok'),
+      catchError((err: HttpErrorResponse) => of<LoginResult>(err.status === 401 ? 'invalid' : 'error')),
+    );
   }
 
   logout(): void {

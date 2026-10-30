@@ -6,10 +6,12 @@ import { AuthService } from './auth.service';
 import { UiService } from './ui.service';
 
 /**
- * - Adds the bearer token to requests for this app's own URLs
+ * - Adds the bearer token to requests for this app's own (relative) URLs
  * - Tracks pending requests for a global loading indicator
  * - Handles 401 (sign out + redirect to login) and 403 (redirect to forbidden)
  * - Announces errors to assistive technology
+ * The login request is passed through untouched: its 401 means "wrong password",
+ * and LoginComponent shows that message itself.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
@@ -17,13 +19,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const ui = inject(UiService);
 
   const isOwnRequest = !/^https?:\/\//i.test(req.url);
+  const isLogin = req.url.endsWith('/api/auth/login');
   const token = auth.token();
   const authReq =
-    isOwnRequest && token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+    isOwnRequest && token && !isLogin ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   ui.startLoading();
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
+      if (isLogin) {
+        return throwError(() => error);
+      }
       if (error.status === 401) {
         auth.logout();
         ui.announce('Your session has expired. Please sign in again.');
