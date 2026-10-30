@@ -46,7 +46,9 @@ import { UiService } from '../core/ui.service';
         />
       </div>
 
-      <button type="submit" class="btn primary">Sign in</button>
+      <button type="submit" class="btn primary" [disabled]="busy()">
+        {{ busy() ? 'Signing in…' : 'Sign in' }}
+      </button>
     </form>
   `,
 })
@@ -59,22 +61,37 @@ export class LoginComponent {
   protected username = '';
   protected password = '';
   protected readonly error = signal('');
+  protected readonly busy = signal(false);
 
   protected submit(): void {
+    if (this.busy()) {
+      return;
+    }
     if (!this.username.trim() || !this.password) {
       this.error.set('Enter both a username and a password.');
       return;
     }
-    if (!this.auth.login(this.username, this.password)) {
-      this.error.set('Incorrect username or password.');
-      return;
-    }
-    this.error.set('');
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    // Only allow in-app relative redirects.
-    const target = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/home';
-    this.router.navigateByUrl(target).then(() => {
-      this.ui.announce(`Signed in as ${this.auth.user()?.displayName}.`);
+
+    this.busy.set(true);
+    this.auth.login(this.username, this.password).subscribe((result) => {
+      this.busy.set(false);
+
+      if (result === 'invalid') {
+        this.error.set('Incorrect username or password.');
+        return;
+      }
+      if (result === 'error') {
+        this.error.set('Could not reach the server. Check that the API is running and try again.');
+        return;
+      }
+
+      this.error.set('');
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      // Only allow in-app relative redirects.
+      const target = returnUrl && returnUrl.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/home';
+      this.router.navigateByUrl(target).then(() => {
+        this.ui.announce(`Signed in as ${this.auth.user()?.displayName}.`);
+      });
     });
   }
 }
